@@ -1,0 +1,9 @@
+# Minimal app dependencies; no Torch, FAISS, LangChain, or hosted API required.
+numpy
+pandas
+matplotlib
+scikit-learn
+requests
+joblib
+PyQt6>=6.6,<7
+pypdf>=6,<7

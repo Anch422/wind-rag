@@ -1,0 +1,56 @@
+# Local data, generated experiments, and private chat history
+/datasets/
+/sessions/
+/results/*
+!/results/.gitkeep
+/benchmarks/*
+!/benchmarks/.gitkeep
+/.cache/
+/tmp/
+/temp/
+# Superseded screenshots (current walkthrough screenshots are included)
+/docs/app-setup.png
+/docs/app-results.png
+
+# Python environments, caches, and build outputs
+.conda/
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.egg-info/
+/build/
+/dist/
+.coverage*
+htmlcov/
+
+# Local credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.idea/
+.vscode/
+
+# Large archives, generated indexes, logs, and OS files
+*.zip
+*.7z
+*.tar
+*.gz
+*.joblib
+*.pkl
+*.pickle
+*.sqlite3
+*.sqlite3-*
+*.log
+*.tmp
+*.bak
+Thumbs.db
+Desktop.ini
+.DS_Store

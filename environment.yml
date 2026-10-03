@@ -1,0 +1,19 @@
+name: wind-rag
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - openpyxl
+  - jupyterlab
+  - ipykernel
+  - requests
+  - joblib
+  - tqdm
+  - pip:
+      - PyQt6>=6.6,<7
+      - pypdf>=6,<7
