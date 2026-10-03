@@ -241,6 +241,10 @@ For a first trial, choose **Offline demo**. It uses statistical retrieval and ex
 
 ## 2. Chat
 
+Assistant replies render Markdown paragraphs, bold text, and lists; your messages remain plain text. Saved replies retain their original text and use the same formatting when reopened. Model-provided images and raw HTML are not loaded. Formatting does not change benchmark answer text or metric calculations.
+
+Answers have a 1,024-token output budget. If Ollama reports a token-limit cutoff, the app regenerates the full answer once with 2,048 tokens. Request time and token usage include that retry. A second cutoff produces an explicit error rather than saving an unfinished answer as a successful benchmark response. Existing incomplete replies cannot be completed from saved text: resend the question. These changed generation settings use a new prompt version, so compare new benchmark runs within their own compatible group.
+
 ### Inspect the dataset before asking questions
 
 Open **Dataset → Events**. Farm is the site; Event is the recorded window ID; Asset identifies the turbine; Label distinguishes anomaly and normal records; Start and Recorded description summarize the window. Click a column heading to sort, then click again to reverse it. Scroll horizontally when columns extend beyond the window.
@@ -249,7 +253,7 @@ Select an event row, choose an available sensor in the dropdown, and click **Plo
 
 Open **Source IDs / corpus** to inspect indexed documents and their source IDs. **Export source catalog** saves the evidence catalog for preparing validation annotations. The IDs must match the current corpus; report IDs contain page/chunk identifiers, not just a PDF filename. Selecting an event in Dataset does not silently scope a chat: name the farm/event in your message.
 
-Choose **one model** and **one RAG algorithm**, type a question, and press **Enter** or click **Send message**. **Shift+Enter** adds a new line. An animated typing indicator appears while the reply loads. Your message appears on the right; the reply appears on the left. Only the selected algorithm runs. **Show evidence** expands the retrieved records.
+Choose **one model** and **one RAG algorithm**, type a question, and press **Enter** or click **Send message**. **Shift+Enter** adds a new line. While the reply loads, animated dots accompany rotating messages such as **Checking turbine records**, **Reviewing retrieved evidence**, and **Preparing your answer**. Repair questions use report-related variations such as **Checking technician reports**, **Analyzing documented findings**, and **Reviewing repair records**. These are loading-message variations; the bottom status shows actual task progress. Your message appears on the right; the reply appears on the left. Only the selected algorithm runs. **Show evidence** expands the retrieved records.
 
 In **Dataset**, click a column title to sort the records; click again to reverse the order. The **Results** tab lets you view saved runs and compare selected runs.
 
@@ -284,6 +288,8 @@ To add your own technician reports, place searchable `.pdf` files in a separate 
 Datasets, generated benchmark questions/results, saved chat sessions, indexes, temporary files, environments, and credentials are excluded by `.gitignore`. A fresh clone therefore needs the CARE dataset extracted into `datasets/CARE_To_Compare` (or selected in Setup). Provide searchable technician PDFs separately, or disable **Include technician PDF reports**. To regenerate the provided research reports after supplying CARE, install `reportlab` and run `python tools/generate_technician_reports.py`. The source code, tests, documentation, and small guide screenshots are included.
 
 ### How questions select evidence
+
+Multi-farm overviews such as “Check the condition of all my windfarms” reserve one algorithm-ranked source per available farm before filling the remaining top-k slots. All algorithms use this same coverage rule; the ranking within each farm remains algorithm-specific. With A/B/C and top-k 3, each farm receives one source. A smaller top-k produces a clear instruction to increase it rather than silently omitting a farm. This covers farms, not every historical event. The answer prompt asks for one cited section per requested farm and identifies missing evidence. This retrieval change uses a new prompt version for benchmark compatibility.
 
 Questions such as **“What's the problem with Wind Farm C?”**, **“What is wrong with Farm C?”**, or **“List anomalies at Wind Farm C”** search recorded anomaly events rather than sensor descriptions. Normal-event requests search normal records; broad health/status questions search event records of both labels. Naming farms restricts retrieval to those farms, including comparisons such as “farms A and C”. Explicit event IDs and turbine/asset numbers further restrict the evidence. Repair, troubleshooting, and possible-cause questions search technician reports. Sensor and unit questions retain general retrieval.
 

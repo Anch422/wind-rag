@@ -1,10 +1,11 @@
 """Task-focused interface: chat, sequential benchmarking, saved-run comparisons."""
 import html
 import json
+import re
 import sys
 from pathlib import Path
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QUrl
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QDesktopServices, QTextDocument
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QComboBox, QLineEdit, QTextEdit, QTextBrowser, QScrollArea, QFrame,
     QListWidget, QListWidgetItem, QSpinBox, QSplitter, QFileDialog, QGroupBox, QTabWidget, QProgressBar)
@@ -335,6 +336,7 @@ class Workbench(MainWindow):
         self.typing_timer.setInterval(350)
         self.typing_timer.timeout.connect(self.animate_typing)
         self.typing_step = 0
+        self.typing_messages = ('Checking turbine records', 'Reviewing retrieved evidence', 'Preparing your answer')
         self.chat_save_timer = QTimer(self)
         self.chat_save_timer.setSingleShot(True)
         self.chat_save_timer.setInterval(300)
@@ -422,8 +424,10 @@ class Workbench(MainWindow):
                     'Offline demo · extractive replies' if self.engine.settings.mode == 'offline' else 'Local Ollama')
 
     def animate_typing(self):
-        self.typing_step = self.typing_step % 3 + 1
-        self.typing_label.setText(f'{APP_NAME} is typing ' + "● " * self.typing_step)
+        message = self.typing_messages[(self.typing_step // 9) % len(self.typing_messages)]
+        dots = self.typing_step % 3 + 1
+        self.typing_label.setText(f'{APP_NAME} · {message} ' + "● " * dots)
+        self.typing_step += 1
 
     def stop_typing(self):
         self.typing_timer.stop()
@@ -441,7 +445,18 @@ class Workbench(MainWindow):
         title.setWordWrap(True)
         body.addWidget(title)
         message = QLabel(text)
-        message.setTextFormat(Qt.TextFormat.PlainText)
+        if role == 'You':
+            message.setTextFormat(Qt.TextFormat.PlainText)
+        else:
+            formatted = QTextDocument()
+            message.ensurePolished()
+            formatted.setDefaultFont(message.font())
+            formatted.setMarkdown(text, QTextDocument.MarkdownFeature.MarkdownDialectGitHub |
+                                  QTextDocument.MarkdownFeature.MarkdownNoHTML)
+            message.setTextFormat(Qt.TextFormat.RichText)
+            # Model formatting must not load images from local/remote paths.
+            message.setText(re.sub(r'<img\b[^>]*>', '', formatted.toHtml(), flags=re.I))
+            message.setOpenExternalLinks(False)
         message.setWordWrap(True)
         message.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         body.addWidget(message)
@@ -525,6 +540,14 @@ class Workbench(MainWindow):
             self.question.clear()
             self.save_chat_settings()
             self.chat_pending = True
+            self.typing_step = 0
+            self.typing_messages = (
+                ('Checking technician reports', 'Analyzing documented findings', 'Reviewing repair records', 'Preparing your answer')
+                if engine.evidence_scope(query) == 'technician_reports' else
+                ('Checking turbine records', 'Reviewing recorded events', 'Examining retrieved evidence', 'Preparing your answer')
+                if engine.evidence_scope(query) in ('events', 'anomaly_events', 'normal_events') else
+                ('Checking turbine records', 'Looking through source documents', 'Reviewing retrieved evidence', 'Preparing your answer')
+            )
             self.chat_layout.addWidget(self.typing_label, 0, Qt.AlignmentFlag.AlignLeft)
             self.animate_typing()
             self.typing_label.show()

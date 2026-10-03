@@ -67,3 +67,22 @@ class AnomalyIntentTests(unittest.TestCase):
         unknown = Document('unknown', 'Failure', 'Converter failure documented', 'events.csv', 'event', 'Wind Farm C')
         self.assertTrue(matches_document(unknown, analyze_query('What failed at farm C?')))
         self.assertFalse(matches_document(unknown, analyze_query('What failed at farm A?')))
+
+    def test_all_farms_overview_covers_each_farm_in_every_algorithm(self):
+        for query in ('Check the condition of all my windfarms', 'How are all wind farms?', 'List problems across farms A and B and C'):
+            for method in METHODS:
+                with self.subTest(query=query, method=method):
+                    sources = self.engine.retrieve(query, method)
+                    self.assertEqual({doc.farm for doc, _ in sources}, {'Wind Farm A', 'Wind Farm B', 'Wind Farm C'})
+                    self.assertEqual(len(sources), 3)
+
+    def test_overview_insufficient_top_k_is_explicit(self):
+        previous = self.engine.settings.top_k
+        try:
+            self.engine.settings.top_k = 2
+            with self.assertRaisesRegex(ValueError, 'at least 3'):
+                self.engine.retrieve('Check the condition of all my windfarms', 'BM25')
+            sources = self.engine.retrieve('Compare problems at farms A and C', 'BM25')
+            self.assertEqual({doc.farm for doc, _ in sources}, {'Wind Farm A', 'Wind Farm C'})
+        finally:
+            self.engine.settings.top_k = previous

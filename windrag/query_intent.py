@@ -9,6 +9,7 @@ class QueryIntent:
     farms: frozenset
     events: frozenset
     assets: frozenset
+    farm_overview: bool = False
 
 
 def analyze_query(query):
@@ -37,7 +38,9 @@ def analyze_query(query):
         scope = 'events'
     else:
         scope = 'all'
-    return QueryIntent(scope, frozenset(farms), events, assets)
+    overview = not sensor and not events and not assets and bool(
+        len(farms) > 1 or re.search(r'\b(?:all|every|each|both)\b.*\b(?:wind\s*)?farms?\b|\bwind\s*farms\b|\bfarms\b', text))
+    return QueryIntent(scope, frozenset(farms), events, assets, overview)
 
 
 def matches_document(doc, intent):

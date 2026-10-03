@@ -5,7 +5,8 @@ import tempfile
 from unittest.mock import patch
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtTest import QTest
-from PyQt6.QtWidgets import QApplication, QPushButton, QTextBrowser
+from PyQt6.QtWidgets import QApplication, QPushButton, QTextBrowser, QLabel
+from PyQt6.QtGui import QTextDocument
 from windrag.workbench import MessageEditor, Workbench
 from windrag.ui import fill_table, table_widget
 from windrag.engine import Engine, Settings, METHODS
@@ -22,6 +23,25 @@ class ChatControlsTests(unittest.TestCase):
 
     def make_window(self):
         return Workbench(chat_database=Path(self.chat_folder.name) / 'chats.sqlite3')
+
+    def test_assistant_markdown_renders_and_does_not_load_model_images(self):
+        with patch.object(Workbench, 'check_ollama'), patch.object(Workbench, 'refresh_runs'):
+            window = self.make_window()
+            text = '1. **Event 12**: Repair completed. [C:event:12]\n\n- Second finding.\n\n![external](https://example.com/image.png)\n\n<script>literal</script>'
+            window.bubble('LOUIE', text)
+            frame = window.chat_layout.itemAt(0).layout().itemAt(0).widget()
+            message = frame.findChildren(QLabel)[1]
+            self.assertEqual(message.textFormat(), Qt.TextFormat.RichText)
+            self.assertNotIn('<img', message.text())
+            document = QTextDocument()
+            document.setHtml(message.text())
+            plain = document.toPlainText()
+            self.assertIn('Event 12', plain)
+            self.assertIn('[C:event:12]', plain)
+            self.assertNotIn('**', plain)
+            self.assertIn('<script>literal</script>', plain)
+            self.assertEqual(window.chat_messages[0]['text'], text)
+            window.close()
 
     def test_pdf_evidence_link_opens_correct_local_file(self):
         import tempfile
@@ -113,6 +133,16 @@ class ChatControlsTests(unittest.TestCase):
             first = window.typing_label.text()
             QTest.qWait(400)
             self.assertNotEqual(first, window.typing_label.text())
+            window.typing_timer.stop()
+            window.typing_step = 0
+            messages = []
+            for _ in range(27):
+                window.animate_typing()
+                messages.append(window.typing_label.text())
+            self.assertTrue(any('Checking turbine records' in message for message in messages))
+            self.assertTrue(any('Reviewing retrieved evidence' in message for message in messages))
+            self.assertTrue(any('Preparing your answer' in message for message in messages))
+            self.assertTrue(all('is typing' not in message for message in messages))
             window._busy = True
             window.question.setPlainText('Next question')
             window.ask()
