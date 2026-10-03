@@ -3,6 +3,7 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 import json
 import time
 import tempfile
+import shutil
 from pathlib import Path
 from unittest.mock import Mock, patch
 from PyQt6.QtCore import Qt
@@ -45,8 +46,9 @@ wait_task()
 assert len(window.chat_messages) == 3
 assert len(window.query_results) == 1
 assert "Ambient temperature" in window.chat_messages[-1]["text"]
-window.run_count.setValue(6)
+window.run_count.setValue(24)
 window.generate_questions()
+old_run_ids = {entry['run']['run_id'] for entry in window.run_entries}
 for i in range(window.test_rags.count()):
     window.test_rags.item(i).setCheckState(Qt.CheckState.Checked)
 window.run_benchmark()
@@ -55,7 +57,7 @@ assert f"Finished {len(METHODS)} runs" in window.status.text()
 # Choose only this new validation set; all older results remain on disk.
 chosen = 0
 for i, entry in enumerate(window.run_entries):
-    if len(entry["run"]["questions"]) == 6 and entry["run"]["config"]["top_k"] == 3:
+    if entry['run']['run_id'] not in old_run_ids and len(entry["run"]["questions"]) == 24 and entry["run"]["config"]["top_k"] == 3:
         window.saved_runs.item(i).setCheckState(Qt.CheckState.Checked)
         chosen += 1
         if chosen == len(METHODS):
@@ -67,15 +69,26 @@ window.comparison_name.setText("validated-offline-demo")
 window.export_selected()
 assert "Comparison exported" in window.status.text()
 folder = ROOT / "docs"
+comparison = max((ROOT / 'results' / 'comparisons').glob('*_validated-offline-demo'), key=lambda path: path.stat().st_mtime_ns)
+for metric in ('recall_at_k', 'total_ms'):
+    shutil.copy2(comparison / 'graphs' / f'{metric}.png', folder / f'benchmark-{metric}.png')
+window.new_chat()
+window.question.setPlainText("What's the problem with Wind Farm C?")
+window.ask()
+wait_task()
+assert all(source['id'].startswith('C:event:') for source in window.query_results[0]['sources'])
 window.tabs.setCurrentIndex(2)
 app.processEvents()
 window.grab().save(str(folder / "app-chat.png"))
+window.tabs.setCurrentIndex(1)
+app.processEvents()
+window.grab().save(str(folder / 'app-dataset.png'))
 window.tabs.setCurrentIndex(3)
 app.processEvents()
 window.grab().save(str(folder / "app-benchmark.png"))
 window.tabs.setCurrentIndex(4)
 app.processEvents()
 window.grab().save(str(folder / "app-comparisons.png"))
-print(json.dumps({"chat": "passed", "sequential_runs": len(METHODS), "comparison_export": "passed", "screenshots": 3}, indent=2))
+print(json.dumps({"chat": "passed", "sequential_runs": len(METHODS), "questions_per_run": 24, "comparison_export": "passed", "screenshots": 4, "graph_examples": 2}, indent=2))
 window.close()
 chat_folder.cleanup()

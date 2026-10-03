@@ -139,7 +139,7 @@ In this project, each metadata record is already short enough to be a source doc
 
 A **corpus** is the whole searchable collection. A **document** is one source unit within it. An **index** organizes the collection for search. The **context** is the selected evidence sent to the model for one question.
 
-The corpus has 450 documents, but top-k `5` means only five retrieved documents enter an answer request.
+CARE contributes 450 documents; the supplied 90 report pages add chunks to that corpus. The interface defaults to top-k `3`, so at most three eligible sources enter one answer request.
 
 ### Embeddings and cosine similarity
 
@@ -167,7 +167,7 @@ RAG retrieves external evidence at answer time. **Fine-tuning** changes a model'
 
 The app can include searchable PDF reports alongside CARE metadata. Its default additional folder is `datasets/technician_reports`, containing 45 individual two-page reports. Generation history and verification status are preserved in the manifest, which is not sent to the LLM. Event mappings and recorded anomaly descriptions come from CARE; the generated service records have not been independently verified. Enable or disable reports in Setup to create combined-corpus or metadata-only experiments.
 
-`pypdf` extracts page text; long pages become overlapping chunks. Source IDs retain PDF/page/chunk provenance. Repair and cause questions search report chunks, with an explicit farm narrowing the search. All six retrieval algorithms apply the same eligibility rule, allowing comparisons within that task. Other questions search the combined corpus. Generation is instructed to cite reports, describe the recorded repair directly, and keep suspected causes distinct from facts. This adds historical-report recommendation, not a validated diagnostic or autonomous maintenance system.
+`pypdf` extracts page text; long pages become overlapping chunks. Source IDs retain PDF/page/chunk provenance. Repair and cause questions search report chunks, with an explicit farm narrowing the search. All six retrieval algorithms apply the same eligibility rule, allowing comparisons within that task. Problem questions search anomaly events; explicit normal-event requests search normal records, health overviews search both labels, and sensor questions use general retrieval. Explicit farms and event/asset identifiers narrow the same candidate pool for every algorithm. Generation is instructed to cite reports, describe the recorded repair directly, and keep suspected causes distinct from facts. This adds historical-report recommendation, not a validated diagnostic or autonomous maintenance system.
 
 Report-based validation questions can be generated along with metadata questions. Review references and source coverage manually. Results on these generated fixtures should be described as a controlled RAG experiment, not evidence of real repair effectiveness. Scanned PDFs require OCR before import; the app does not perform OCR. Changing reports or the evidence prompt requires fresh compatible benchmark runs.
 
@@ -354,7 +354,7 @@ CSV files need the same fields. For multiple relevant IDs, use a pipe-separated 
 1. Define the user task: historical operational question answering.
 2. Write a research question, such as whether hybrid retrieval improves evidence recall over dense retrieval.
 3. Create a small reviewed development set covering different farms and question types.
-4. Choose one embedding model and one generator and keep them fixed across the three methods.
+4. Choose one embedding model and one generator and keep them fixed across all six methods. With Hybrid + reranking, that generator also performs relevance scoring. Use the same reviewed validation set and settings for every run.
 5. Use development questions to select top-k and candidate depth.
 6. Freeze the settings and prepare an independent evaluation set.
 7. Run all methods on that same set in Ollama mode.
@@ -413,7 +413,7 @@ _THESIS/
     SETUP.md                # Short setup reference
     environment.yml         # Named Conda research environment
     requirements.txt        # Minimal app package list
-    .cache/indexes/         # Saved indexes, shared by all three methods
+    .cache/indexes/         # Saved indexes, shared by all six methods
     windrag/
         __init__.py
         data.py             # Dataset and benchmark loading
@@ -524,7 +524,7 @@ Write a question that the indexed records cannot answer. Annotate no relevant ID
 
 ### Exercise F — Write your methodology
 
-Describe the corpus, question-set creation, fixed models, three retrieval methods, settings, metrics, hardware, and limitations. Use the saved run files to support exact configuration details. Avoid using a perfect demo score as evidence of real-world operational capability.
+Describe the corpus, question-set creation, fixed models, selected retrieval methods, settings, metrics, hardware, and limitations. Use the saved run files to support exact configuration details. Avoid using a perfect demo score as evidence of real-world operational capability.
 
 ## 15. Glossary and further reading
 

@@ -45,10 +45,14 @@ class ChatSessionsTests(unittest.TestCase):
             window.bubble('You', 'What failed?')
             sources = [{'id': 'REPORT:a:p2:c1', 'title': 'Repair report', 'text': 'Bearing repair', 'source': str(Path(folder) / 'repair.pdf')}]
             window.bubble(APP_NAME, 'The bearing.', 'Local model', sources)
+            old_row = window.chat_layout.itemAt(0).layout()
+            old_bubble = next(old_row.itemAt(i).widget() for i in range(old_row.count()) if old_row.itemAt(i).widget() is not None)
             window.chat_model.setCurrentText('custom:7b')
             window.chat_rag.setCurrentText('BM25')
             window.question.setPlainText('Draft follow-up')
             window.new_chat()
+            self.assertTrue(old_bubble.isHidden())
+            self.assertIsNone(old_bubble.parent())
             second = window.active_chat_id
             self.assertNotEqual(first, second)
             self.assertEqual(window.chat_messages, [])

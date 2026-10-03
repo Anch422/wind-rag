@@ -505,6 +505,8 @@ class Workbench(MainWindow):
                 while child.count():
                     widget = child.takeAt(0).widget()
                     if widget:
+                        widget.hide()
+                        widget.setParent(None)
                         widget.deleteLater()
                 child.deleteLater()
         self.chat_messages = []
