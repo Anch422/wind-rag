@@ -71,6 +71,17 @@ class TechnicianReportTests(unittest.TestCase):
         self.assertEqual(row['sources'], [])
         self.assertIn('Insufficient evidence', row['answer'])
 
+    def test_chat_report_followup_retrieves_only_original_farm(self):
+        from windrag.chat_context import resolve_followup
+        docs, _, _, _ = load_corpus(ROOT / 'datasets' / 'CARE_To_Compare', ROOT / 'datasets' / 'technician_reports')
+        engine = Engine(docs, Settings(mode='offline', top_k=3))
+        history = [{'role': 'You', 'text': 'What problems exist at Wind Farm A?'},
+                   {'role': 'LOUIE', 'text': 'Wind Farm C has failures.'}]
+        query = resolve_followup('check technician reports', history)
+        for row in engine.compare(query):
+            self.assertTrue(row['sources'])
+            self.assertTrue(all(source['farm'] == 'Wind Farm A' and source['kind'] == 'report' for source in row['sources']))
+
     def test_image_only_pdf_is_rejected_with_ocr_hint(self):
         with tempfile.TemporaryDirectory() as directory:
             writer = PdfWriter()

@@ -21,6 +21,7 @@ from .evaluation import METRICS
 from .benchmark_worker import BenchmarkWorker
 from .branding import APP_NAME, APP_FULL_NAME
 from .chat_store import ChatStore
+from .chat_context import resolve_followup
 
 
 class MessageEditor(QTextEdit):
@@ -536,6 +537,7 @@ class Workbench(MainWindow):
             query = self.question.toPlainText().strip()
             if not query:
                 raise ValueError("Type a question first.")
+            resolved_query = resolve_followup(query, self.chat_messages)
             self.bubble("You", query)
             self.question.clear()
             self.save_chat_settings()
@@ -543,9 +545,9 @@ class Workbench(MainWindow):
             self.typing_step = 0
             self.typing_messages = (
                 ('Checking technician reports', 'Analyzing documented findings', 'Reviewing repair records', 'Preparing your answer')
-                if engine.evidence_scope(query) == 'technician_reports' else
+                if engine.evidence_scope(resolved_query) == 'technician_reports' else
                 ('Checking turbine records', 'Reviewing recorded events', 'Examining retrieved evidence', 'Preparing your answer')
-                if engine.evidence_scope(query) in ('events', 'anomaly_events', 'normal_events') else
+                if engine.evidence_scope(resolved_query) in ('events', 'anomaly_events', 'normal_events') else
                 ('Checking turbine records', 'Looking through source documents', 'Reviewing retrieved evidence', 'Preparing your answer')
             )
             self.chat_layout.addWidget(self.typing_label, 0, Qt.AlignmentFlag.AlignLeft)
@@ -553,7 +555,7 @@ class Workbench(MainWindow):
             self.typing_label.show()
             self.typing_timer.start()
             QTimer.singleShot(0, lambda: self.chat_scroll.verticalScrollBar().setValue(self.chat_scroll.verticalScrollBar().maximum()))
-            self.perform(lambda p, c: engine.compare(query, p, c, order=[rag]),
+            self.perform(lambda p, c: engine.compare(resolved_query, p, c, order=[rag]),
                          lambda rows: self.chat_reply(rows, model if engine.settings.mode == "ollama" else "offline-demo", rag))
         self.guard(action)
 

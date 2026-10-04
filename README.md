@@ -147,15 +147,14 @@ For a quick workflow check without model downloads, skip this step and choose **
 
 ### Step 7 — Launch LOUIE
 
-In Anaconda Prompt:
+Open the project folder containing `app.py` in File Explorer. Type `cmd` in its address bar and press Enter, then run:
 
 ```bat
 conda activate wind-rag
-cd /d C:\Users\USER\Development\_THESIS
 python app.py
 ```
 
-A desktop window appears. Keep the launching terminal open while the application runs. Wait for initialization. If a path or model is missing, fix it in Setup and retry; for Offline demo, select that run mode. A successful startup unlocks Chat and Benchmark. You do not need to start a browser server or run `ollama run` for each chat.
+Then open **Ollama** from the Windows Start menu. Keep it and Command Prompt running while using LOUIE. If initialization failed before Ollama opened, click **Retry initialization**. Offline demo does not need Ollama.
 
 ## Run Conda and LOUIE inside VS Code
 
@@ -169,26 +168,24 @@ A desktop window appears. Keep the launching terminal open while the application
 
 ### Activate Conda in the VS Code terminal
 
-If the terminal is **PowerShell**, initialize it once from **Anaconda Prompt**:
+Choose **Terminal → Select Default Profile → Command Prompt**, then open a new terminal in the project folder. If cmd cannot find Conda, initialize it once from **Anaconda Prompt**:
 
 ```bat
-conda init powershell
+conda init cmd.exe
 ```
 
-Close and reopen VS Code so new PowerShell terminals load the updated shell configuration. This changes your shell profile, not the project. Conda documents the restart requirement in [conda init](https://docs.conda.io/projects/conda/en/stable/commands/init.html).
+Close and reopen Command Prompt or VS Code after this one-time setup.
 
-Then, in VS Code's PowerShell terminal:
+In VS Code's Command Prompt terminal:
 
-```powershell
+```bat
 conda activate wind-rag
-Set-Location 'C:\Users\USER\Development\_THESIS'
-python -c "import sys; print(sys.executable)"
 python app.py
 ```
 
-Use your real project path. `cd /d` is for Anaconda Prompt/Command Prompt; PowerShell uses `Set-Location` or `cd` without `/d`. If already in the project, omit the folder-change line.
+Then open **Ollama** from Start. If needed, click **Retry initialization** in LOUIE.
 
-If PowerShell profile loading is blocked by your computer's policy, use **Anaconda Prompt** instead. Another option is launching VS Code from an activated Anaconda Prompt:
+Alternatively, open VS Code from Anaconda Prompt in your project folder:
 
 ```bat
 conda activate wind-rag
@@ -204,10 +201,10 @@ Open `app.py`, then choose **Run Python File in Terminal** using the selected `w
 
 ## Daily startup and shutdown
 
-1. Open Ollama for real-model mode. Skip it for Offline demo.
-2. Open Anaconda Prompt, or VS Code with the project and `wind-rag` interpreter.
-3. Activate `wind-rag`, enter the project directory, and run `python app.py`.
-4. Wait for automatic initialization. Saved compatible indexes load; the last selected chat returns.
+1. Open **cmd in the project folder** (type `cmd` in File Explorer's address bar).
+2. Run `conda activate wind-rag`, then `python app.py`.
+3. Open **Ollama** from Start. Skip it for Offline demo.
+4. Wait for initialization; click **Retry initialization** if it failed before Ollama opened. Saved compatible indexes load and your last chat returns.
 5. Use Chat for exploration, Benchmark for experiments, and Results for comparisons.
 6. Close LOUIE when done. Messages and drafts save locally. `conda deactivate` is optional after the app closes.
 
@@ -307,7 +304,7 @@ The **Your chats** sidebar on the left works like a chat history:
 
 Messages and replies save immediately. Retrieved evidence, PDF links, model/RAG selections, and unsent drafts are also saved automatically. Drafts save shortly after typing and when switching chats or closing the app. Chats are stored locally in `sessions/chat_history.sqlite3`; keep this file if you back up or move your project. They do not require an online account. PDF links refer to the original files, so those files must remain available to open them.
 
-Each request answers the current question independently; include the sensor/farm/event explicitly in follow-up questions. Saved history lets you revisit conversations, but previous messages are not added to the model's question automatically. Chat is separate from benchmark experiments and does not automatically create a results folder.
+Chat follow-ups carry forward the latest user-mentioned farm and applicable event/asset identifiers from that conversation. For example, asking about Wind Farm A and then “check technician reports” keeps report retrieval on Farm A. Explicitly naming another farm or requesting all farms replaces that scope; New chat starts without inherited context. Common component names can also carry into repair follow-ups. This is targeted retrieval context, not the entire conversation passed to the LLM. Assistant statements are never used to choose the inherited farm. Benchmark questions remain independent. Chat does not automatically create a results folder.
 
 ![Chat](docs/app-chat.png)
 
@@ -639,11 +636,10 @@ Screenshots show the current LOUIE interface using local/offline fixtures. The s
 
 | Symptom | What to check/do |
 | --- | --- |
-| `conda` is not recognized | Open Anaconda/Miniconda Prompt. For VS Code PowerShell, run `conda init powershell` there, then restart VS Code. |
+| `conda` is not recognized | Run `conda init cmd.exe` once in Anaconda/Miniconda Prompt, then reopen cmd. In VS Code choose the Command Prompt terminal profile. |
 | Environment already exists | Run `conda activate wind-rag`; do not create it again. |
 | A library such as PyQt6/pypdf is missing | Activate `wind-rag`, verify `sys.executable`, and run `python -m pip install -r requirements.txt`. |
 | `app.py` cannot be found | Enter the extracted project folder containing `app.py`. Check `dir` in the terminal. |
-| PowerShell rejects `cd /d` | Use `Set-Location 'your-path'` in PowerShell; `/d` belongs to Command Prompt. |
 | No CARE metadata / missing farm files | Extract the dataset; select the folder directly containing Wind Farm A/B/C, not a ZIP or the outer wrapper. |
 | Reports folder missing on fresh clone | Supply PDFs, run the optional generator, or uncheck Include technician PDF reports. |
 | A scanned PDF has no searchable text | Perform OCR separately, save a searchable PDF, then refresh indexes. |
@@ -655,7 +651,7 @@ Screenshots show the current LOUIE interface using local/offline fixtures. The s
 | Need to stop benchmarking | Click Force cancel benchmark. Completed runs remain; the current incomplete run is discarded. |
 | Results are incompatible | Use the exact same reviewed validation, corpus, run mode, embedding setup, top-k, candidates, temperature, and prompt version. Start a new comparison group after changes. |
 | Answer is wrong or evidence is irrelevant | Inspect Show evidence, routing, farm/event IDs, and source text. A citation alone does not prove support. Rephrase explicitly and record the failure for evaluation. |
-| “It” or “that turbine” is misunderstood | Earlier messages are saved for display but not included in each model request. Name the farm, asset/event, or component again. |
+| “It” or “that turbine” is misunderstood | Farm and explicit event/asset context carries from user messages within this chat. For ambiguous components or multiple issues, name the specific component/event again. New chat resets context. |
 | Open PDF cannot find the report | Restore the original file or rebuild using its current folder; saved chat evidence retains the original file path. |
 | No runs after a fresh clone | Results are local and excluded from Git. Run a benchmark or restore your backed-up result folders. |
 

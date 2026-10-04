@@ -6,7 +6,7 @@ For the current app walkthrough, read [README.md](../README.md). This course exp
 
 LOUIE saves conversations locally using SQLite, a database included with Python. Each chat has its own messages, evidence, selected model, RAG algorithm, and draft. Saving messages as they arrive means you can close the application and return to the last chat. The sidebar lets you create, switch between, and delete chats.
 
-Stored history and model memory are different features. LOUIE currently retrieves evidence and generates an answer for the question you send; it does not include earlier chat messages in that model request. Use explicit questions such as “How was the generator bearing repaired at Wind Farm A?” rather than “How was it repaired?” when the component matters. This also keeps individual benchmark questions independent and easier to compare.
+Stored history and model memory are different features. LOUIE resolves chat follow-ups using user-mentioned farm, event/asset identifiers, and supported component names before retrieving evidence. An explicit new farm or an all-farms request replaces the inherited scope; each chat is isolated. The complete conversation is not sent to the model, and assistant statements do not determine inherited farm filters. Name the component explicitly when several issues are discussed. Benchmark questions bypass chat context and remain independent for fair comparison.
 
 Chat history lives in `sessions/chat_history.sqlite3`, while research runs live in `results/`. Deleting a chat does not delete research results or PDF reports. Back up the database together with the dataset if you want to preserve conversations and working evidence links.
 

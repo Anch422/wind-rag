@@ -10,15 +10,16 @@ Install Anaconda or Miniconda and enter the project folder in Anaconda Prompt. R
 
 ## Daily startup
 
-In Anaconda Prompt:
+Open the project folder containing `app.py` in File Explorer. Type `cmd` in the address bar and press Enter. Run:
 
 ```bat
 conda activate wind-rag
-cd /d C:\Users\USER\Development\_THESIS
 python app.py
 ```
 
-Replace the path with your actual project folder. In PowerShell use `Set-Location 'your-project-path'` instead of `cd /d`. In VS Code, open the project folder, select **Python: Select Interpreter → wind-rag**, and use a new terminal. README explains shell initialization, interpreter verification, and alternatives if activation fails. Keep Ollama running for real-model experiments; Offline demo does not require it.
+Then open **Ollama** from Start and leave it running. If LOUIE initialized before Ollama was available, click **Retry initialization**.
+
+In VS Code choose **Terminal → Select Default Profile → Command Prompt**, open a new terminal in the project folder, and use the same two commands. If `conda` is not recognized, run `conda init cmd.exe` once in Anaconda Prompt, then reopen cmd. Keep the launching terminal open while LOUIE runs.
 
 The app automatically initializes models, dataset, RAG indexes, and saved results when opened. Wait for the loading bar to finish. All six algorithms reuse the shared saved index across sessions. If Ollama is unavailable, Setup remains accessible: start Ollama and retry, or choose **Offline demo**, which initializes automatically. Answer models and retrieval settings can change without rebuilding. **Reset to defaults** restores setup choices while keeping saved indexes and results.
 
